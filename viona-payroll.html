@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>VIONA - Payroll Intelligence System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            /* Palette AHA Official */
+            --aha-blue-dark: #1d388b;
+            --aha-blue-main: #325fec;
+            --aha-blue-light: #96adf5;
+            --aha-purple: #6d50b8;
+            --aha-yellow: #f4c144;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--aha-blue-dark) 0%, var(--aha-blue-main) 60%, var(--aha-blue-light) 100%);
+            min-height: 100vh; margin: 0; padding: 40px;
+        }
+
+        .viona-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            max-width: 1150px; margin: auto; border-radius: 30px;
+            padding: 40px; box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+        .viona-logo { 
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(to right, #1e40af, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            letter-spacing: -2px;
+        }
+        .subtitle { color: #64748b; font-size: 18px; margin-top: 5px; font-weight: 500; }
+
+        .admin-box { background: var(--white); border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 15px; text-align: right; }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+        th { padding: 15px; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: left; }
+        td { background: white; padding: 15px; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        tr td:first-child { border-left: 1px solid #f1f5f9; border-radius: 15px 0 0 15px; }
+        tr td:last-child { border-right: 1px solid #f1f5f9; border-radius: 0 15px 15px 0; }
+
+        .input-v { border: 1.5px solid #e2e8f0; padding: 8px; border-radius: 8px; width: 85px; font-weight: 600; text-align: center; }
+        .input-v:focus { border-color: var(--aha-blue-main); outline: none; }
+
+        .btn-action {
+            padding: 15px 25px; border-radius: 12px; border: none; font-weight: bold;
+            cursor: pointer; transition: 0.3s; margin-top: 20px;
+        }
+        .btn-calc { background: var(--aha-blue-dark); color: white; }
+        .btn-pdf { background: var(--aha-purple); color: white; margin-left: 10px; }
+        .btn-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+<div class="viona-card">
+    <div class="header">
+        <div>
+            <h1 class="viona-logo">VIONA</h1>
+            <div class="subtitle">Payroll Intelligence System</div>
+        </div>
+        <div class="admin-box">
+            <span style="font-size: 10px; color: #94a3b8; display: block;">Hai!</span>
+            <strong style="color: var(--aha-blue-dark);">Manzilina Qhistina</Q></strong>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Karyawan</th>
+                <th>Gaji Pokok</th>
+                <th>Hari Kerja</th>
+                <th>Upah Harian</th>
+                <th>Lembur(Jam)</th>
+                <th>Prestasi+Bintang</th>
+                <th>BPJS/Pajak</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody id="vionaTable">
+            <tr>
+                <td><strong>Syakira Naura Ramadhani</strong><br><small>CS Agent</small></td>
+                <td><input type="number" class="gapok input-v" value="560000"></td>
+                <td><input type="number" class="hk input-v" value="24"></td>
+                <td><input type="number" class="uh input-v" value="75000"></td>
+                <td><input type="number" class="lembur input-v" value="0"></td>
+                <td><input type="number" class="bonus input-v" value="480000"></td>
+                <td><input type="number" class="pajak input-v" value="53968"></td>
+                <td class="total-final" style="font-weight: 800; color: var(--aha-blue-main);">Rp -</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button class="btn-action btn-calc" onclick="vionaLogic()">⚡ HITUNG HASIL</button>
+    <button class="btn-action btn-pdf" onclick="exportPDF()">📄 CETAK SLIP GAJI</button>
+</div>
+
+<script>
+    function vionaLogic() {
+        const rows = document.querySelectorAll("#vionaTable tr");
+        rows.forEach(row => {
+            const gapok = parseFloat(row.querySelector(".gapok").value) || 0;
+            const hk = parseFloat(row.querySelector(".hk").value) || 0;
+            const uh = parseFloat(row.querySelector(".uh").value) || 0;
+            const jam = parseFloat(row.querySelector(".lembur").value) || 0;
+            const bonus = parseFloat(row.querySelector(".bonus").value) || 0;
+            const pajak = parseFloat(row.querySelector(".pajak").value) || 0;
+
+            // RUMUS ASLI DARI EMAIL KAK QHISTI:
+            // (HK * UH) + Gapok + ((Jam * UH / 8) * 1.5) + Bonus - Pajak
+            const totalHarian = hk * uh;
+            const totalLembur = (jam * uh / 8) * 1.5;
+            const bersih = (gapok + totalHarian + totalLembur + bonus) - pajak;
+
+            row.querySelector(".total-final").innerText = "Rp " + Math.round(bersih).toLocaleString('id-ID');
+        });
+        alert("VIONA: Kalkulasi Gaji Berhasil Disinkronisasi!");
+    }
+
+    function exportPDF() {
+        const element = document.querySelector('.viona-card');
+        const opt = {
+            margin: 0.5, filename: 'VIONA_AHA_Payroll.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+</script>
+
+</body>
+</html>
